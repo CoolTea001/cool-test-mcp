@@ -1,0 +1,30 @@
+{
+  "name": "cool-test-mcp",
+  "version": "0.1.0",
+  "description": "Cool Test MCP — automated testing MCP server: convert test cases into a fixed JSON template and drive case-by-case testing",
+  "type": "module",
+  "bin": {
+    "cool-test-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc && cp src/report-server.mjs dist/report-server.mjs",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js"
+  },
+  "keywords": [
+    "mcp",
+    "testing",
+    "playwright"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  }
+}
