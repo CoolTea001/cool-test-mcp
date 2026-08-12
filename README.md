@@ -1,58 +1,176 @@
 # Cool Test MCP
 
 <p align="center">
-  <a href="README.cn.md">🇨🇳 简体中文</a> · English
+  <a href="README.cn.md">English</a> · 简体中文
 </p>
 
-An automated testing **MCP (Model Context Protocol) server**. After configuring this server in your project and providing test cases, you can trigger the full flow: **convert → test case by case → local visual report**.
+An automated testing **MCP (Model Context Protocol) server**. It is lightweight — no extra runtime dependencies, single entry point, instant to start — and plugs into any MCP-capable agent (Claude Desktop, Cursor, opencode, etc.) with a few lines of config.
 
 ## Features
 
+- **Lightweight & easy to adapt** — no extra runtime deps, runnable via `npx`, one-line config to connect to your agent tools
 - **Conversion** — turn test cases in any format into a fixed JSON template (`.cooltest/`)
 - **Case-by-case testing** — read / test / write cases one by one through MCP tools, avoiding direct JSON file I/O that wastes tokens
 - **Review flow** — cases that cannot be tested or judged are automatically set to `review`, left for human review
 - **Visual report** — a local web page shows all case results and supports editing status and notes
 
-## Install
+## Requirements
 
-```bash
-npm install
-npm run build
+- Node.js 18 or newer
+- Claude Desktop, Cursor, opencode, or any other MCP client
+
+## Getting started
+
+No local install needed — the server runs directly via `npx`. Register it in your agent's MCP configuration.
+
+**Standard config** works in most of the tools:
+
+```js
+{
+  "mcpServers": {
+    "cool-test": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "cool-test-mcp@latest"
+      ],
+      "cwd": "/absolute/path/to/your/project"
+    }
+  }
+}
 ```
 
-## Configuration
+> `cwd` points to your project root; `.cooltest/` will be created there. For clients without a per-server `cwd`, the folder is created in the MCP process's working directory.
 
-Add this to your agent's MCP configuration (e.g. Claude, Cursor):
+<details>
+<summary>Codex</summary>
+
+Use the Codex CLI to add the server:
+
+```bash
+codex mcp add cool-test npx "-y cool-test-mcp@latest"
+```
+
+Alternatively, create or edit `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.cool-test]
+command = "npx"
+args = ["-y", "cool-test-mcp@latest"]
+```
+
+For more information, see the [Codex MCP documentation](https://github.com/openai/codex/blob/main/codex-rs/config.md#mcp_servers).
+
+</details>
+
+<details>
+<summary>Claude Desktop</summary>
+
+Follow the MCP install [guide](https://modelcontextprotocol.io/quickstart/user), and add to `claude_desktop_config.json`:
 
 ```json
 {
   "mcpServers": {
     "cool-test": {
       "command": "npx",
-      "args": ["-y", "cool-test-mcp"],
-      "cwd": "<your project root>"
+      "args": [
+        "-y",
+        "cool-test-mcp@latest"
+      ],
+      "cwd": "/absolute/path/to/your/project"
     }
   }
 }
 ```
 
-> `cwd` points to your project root; `.cooltest/` will be created there.
+</details>
 
-### Local development
+<details>
+<summary>Cursor</summary>
 
-If you cloned the repo instead of installing the package, point directly at the built entry:
+Go to `Cursor Settings` -> `MCP` -> `Add new MCP Server`. Name it to your liking, use `command` type with the command `npx -y cool-test-mcp@latest`. Alternatively, add to `.cursor/mcp.json`:
 
 ```json
 {
   "mcpServers": {
     "cool-test": {
-      "command": "node",
-      "args": ["<absolute path to project>/dist/index.js"],
-      "cwd": "<your project root>"
+      "command": "npx",
+      "args": [
+        "-y",
+        "cool-test-mcp@latest"
+      ]
     }
   }
 }
 ```
+
+</details>
+
+<details>
+<summary>Trae</summary>
+
+Create a `.trae/mcp.json` file in your project root (Cursor-compatible `mcpServers` schema):
+
+```json
+{
+  "mcpServers": {
+    "cool-test": {
+      "command": "npx",
+      "args": ["-y", "cool-test-mcp@latest"]
+    }
+  }
+}
+```
+
+For more information, see the [Trae MCP documentation](https://docs.trae.ai/ide/add-mcp-servers).
+
+</details>
+
+<details>
+<summary>Zed</summary>
+
+Zed uses the `context_servers` key (not `mcpServers`). Add to `~/.config/zed/settings.json`:
+
+```json
+{
+  "context_servers": {
+    "cool-test": {
+      "command": "npx",
+      "args": ["-y", "cool-test-mcp@latest"]
+    }
+  }
+}
+```
+
+For more information, see the [Zed MCP documentation](https://zed.dev/docs/ai/mcp).
+
+</details>
+
+<details>
+<summary>opencode</summary>
+
+Follow the MCP Servers [documentation](https://opencode.ai/docs/mcp-servers/). For example in `~/.config/opencode/opencode.json`:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "cool-test": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "cool-test-mcp@latest"
+      ],
+      "enabled": true
+    }
+  }
+}
+```
+
+</details>
+
+> The MCP configs for each agent tool above have not all been individually verified. If you find any issues or missing configs, we welcome PRs to add or fix them.
 
 ## Usage
 
@@ -70,7 +188,7 @@ The LLM will: check whether your agent has browser automation capability (Playwr
 Use Cool Test to view <address>
 ```
 
-## MCP Tools
+### MCP Tools
 
 | Tool | Purpose |
 |------|---------|
@@ -82,37 +200,23 @@ Use Cool Test to view <address>
 | `cooltest_get_stats` | Suite status statistics |
 | `cooltest_open_report` | Start the local report server and open the page |
 
-## Report Page
+## Contributing
 
-`cooltest_open_report` starts a zero-dependency Node single-script server on a random free port at `127.0.0.1` and opens the visual report:
-
-- Summary bar at the top (Passed / Failed / Review / Pending)
-- Single table with all cases + status filter
-- `review` cases highlight the reason
-- An "Edit" button opens a dialog to modify status and notes; saving writes back to the JSON
-
-## `.cooltest` JSON Structure
-
-```jsonc
-{
-  "schema": "cooltest/v1",
-  "suite": { "name": "...", "source": "...", "createdAt": "...", "updatedAt": "..." },
-  "cases": [{
-    "id": "case-001",
-    "title": "...", "description": "...",
-    "steps": ["..."], "expected": "...",
-    "status": "pending",   // pending | passed | failed | review
-    "priority": "P1", "tags": [],
-    "notes": "", "lastRunAt": null, "evidence": []
-  }]
-}
-```
-
-## Development
+Contributions are welcome. To set up a local environment:
 
 ```bash
-npm run build   # compile TS + copy the report script to dist
-node test-e2e.mjs <temp dir>   # end-to-end check (full tool flow via MCP client)
+# Clone
+git clone https://github.com/CoolTea001/cool-test-mcp.git
+cd cool-test-mcp
+
+# Install
+npm install
+
+# Build (compile TS + copy the report script to dist)
+npm run build
+
+# Test (end-to-end check, full tool flow via MCP client)
+node test-e2e.mjs <temp dir>
 ```
 
 ## License

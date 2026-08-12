@@ -20,6 +20,9 @@
     "playwright"
   ],
   "license": "MIT",
+  "author": {
+    "name": "CoolTea"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/CoolTea001/cool-test-mcp.git"
