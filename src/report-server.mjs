@@ -21,6 +21,9 @@ const CSS = [
   ":root{--bg:#0b1120;--bg-elevated:#111827;--bg-muted:#1f2937;--border:#374151;",
   "--text:#e5e7eb;--text-muted:#9ca3af;--text-dimmed:#6b7280;",
   "--primary:#00DC82;--success:#00DC82;--error:#f87171;--warning:#fbbf24;--info:#60a5fa;}",
+  ":root[data-theme='light']{--bg:#f8fafc;--bg-elevated:#ffffff;--bg-muted:#f1f5f9;--border:#e2e8f0;",
+  "--text:#0f172a;--text-muted:#475569;--text-dimmed:#94a3b8;",
+  "--primary:#059669;--success:#16a34a;--error:#dc2626;--warning:#d97706;--info:#2563eb;}",
   "*{box-sizing:border-box;margin:0;}",
   "body{font-family:'Public Sans',-apple-system,'PingFang SC',sans-serif;background:var(--bg);color:var(--text);padding:32px;line-height:1.5;}",
   "h1{font-size:24px;font-weight:600;}",
@@ -28,6 +31,10 @@ const CSS = [
   ".lang-toggle{display:flex;gap:4px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:999px;padding:3px;}",
   ".lang-toggle button{background:transparent;color:var(--text-muted);border:none;border-radius:999px;padding:4px 14px;font-size:12px;font-weight:600;cursor:pointer;}",
   ".lang-toggle button.active{background:var(--primary);color:#04261a;}",
+  ".prefs{display:flex;align-items:center;gap:8px;}",
+  ".theme-toggle{display:flex;gap:4px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:999px;padding:3px;}",
+  ".theme-toggle button{background:transparent;color:var(--text-muted);border:none;border-radius:999px;padding:4px 14px;font-size:12px;font-weight:600;cursor:pointer;}",
+  ".theme-toggle button.active{background:var(--primary);color:#04261a;}",
   ".sub{color:var(--text-muted);font-size:14px;margin:4px 0 24px;}",
   ".filters{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}",
   ".filters button{background:transparent;color:var(--text-muted);border:1px solid var(--border);border-radius:999px;padding:6px 16px;font-size:13px;cursor:pointer;transition:all .15s ease;}",
@@ -74,6 +81,14 @@ const CSS = [
   ".group h2 .count{color:var(--text-muted);font-size:14px;font-weight:400;}",
   "button{background:var(--primary);color:#04261a;border:none;border-radius:6px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;}",
   "button.ghost{background:transparent;color:var(--text-muted);border:1px solid var(--border);}",
+  ":root[data-theme='light'] .filters button.active,",
+  ":root[data-theme='light'] .lang-toggle button.active,",
+  ":root[data-theme='light'] .theme-toggle button.active,",
+  ":root[data-theme='light'] .st.passed,",
+  ":root[data-theme='light'] .st.failed,",
+  ":root[data-theme='light'] .st.review,",
+  ":root[data-theme='light'] .st.pending,",
+  ":root[data-theme='light'] button[data-action='save']{color:#ffffff;}",
 ].join("");
 
 const PAGE_JS = [
@@ -84,15 +99,21 @@ const PAGE_JS = [
   "    hId:'ID', hCase:'Case', hNotes:'Notes', hStatus:'Status', hActions:'Actions',",
   "    none:'None', reviewNote:'Needs human review', notRun:'Not run', edit:'Edit',",
   "    saveFailed:'Save failed', lStatus:'Status', lNotes:'Notes',",
-  "    phNotes:'Record review comments, reasons…', bCancel:'Cancel', bSave:'Save' },",
+  "    phNotes:'Record review comments, reasons…', bCancel:'Cancel', bSave:'Save',",
+  "    thLight:'Light', thDark:'Dark' },",
   "  zh: { fAll:'全部', fPassed:'通过', fFailed:'失败', fReview:'待审', fPending:'待测',",
   "    sPassed:'通过', sFailed:'失败', sReview:'待审', sPending:'待测',",
   "    hId:'ID', hCase:'用例', hNotes:'备注', hStatus:'状态', hActions:'操作',",
   "    none:'暂无', reviewNote:'需人工审查', notRun:'未运行', edit:'编辑',",
   "    saveFailed:'保存失败', lStatus:'状态', lNotes:'备注',",
-  "    phNotes:'记录审查意见、原因等…', bCancel:'取消', bSave:'保存' }",
+  "    phNotes:'记录审查意见、原因等…', bCancel:'取消', bSave:'保存',",
+  "    thLight:'浅色', thDark:'深色' }",
   "};",
-  "var lang = localStorage.getItem('cooltest-lang') || 'en';",
+  "function loadPrefs(){try{var p=JSON.parse(localStorage.getItem('cooltest-prefs')||'null');return p&&typeof p==='object'?p:{};}catch(e){return {};}}",
+  "function savePrefs(){try{localStorage.setItem('cooltest-prefs',JSON.stringify({lang:lang,theme:THEME}));}catch(e){}}",
+  "var p=loadPrefs();",
+  "var lang=p.lang==='zh'?'zh':'en';",
+  "var THEME=p.theme==='light'?'light':'dark';",
   "function t(k){ return (I18N[lang] && I18N[lang][k]) || I18N.en[k]; }",
   "var STATUS = {passed:{label:function(){return t('sPassed');}},failed:{label:function(){return t('sFailed');}},review:{label:function(){return t('sReview');}},pending:{label:function(){return t('sPending');}}};",
   "const ORDER = ['passed','failed','review','pending'];",
@@ -102,7 +123,11 @@ const PAGE_JS = [
   "  document.querySelectorAll('[data-i18n]').forEach(function(el){el.textContent = t(el.dataset.i18n);});",
   "  var ph = document.querySelector('[data-i18n-ph]'); if(ph) ph.placeholder = t(ph.dataset.i18nPh);",
   "  document.querySelectorAll('#lang-toggle button').forEach(function(b){b.classList.toggle('active', b.dataset.lang === lang);});",
+  "  document.querySelectorAll('#theme-toggle button').forEach(function(b){b.classList.toggle('active', b.dataset.theme === THEME);});",
   "  document.documentElement.lang = lang;",
+  "}",
+  "function applyTheme(){",
+  "  document.documentElement.dataset.theme = THEME;",
   "}",
   "function render(){",
   "  var filter = document.querySelector('.filters button.active').dataset.filter;",
@@ -161,7 +186,9 @@ const PAGE_JS = [
   "document.addEventListener('click',function(e){",
   "  var tgt = e.target && e.target.nodeType === 3 ? e.target.parentElement : e.target;",
   "  var langBtn = tgt.closest('[data-lang]');",
-  "  if(langBtn){lang = langBtn.dataset.lang; localStorage.setItem('cooltest-lang',lang); render(); return;}",
+  "  if(langBtn){lang = langBtn.dataset.lang; savePrefs(); render(); return;}",
+  "  var thBtn = tgt.closest('#theme-toggle [data-theme]');",
+  "  if(thBtn){THEME=thBtn.dataset.theme; savePrefs(); applyTheme(); render(); return;}",
   "  var edit = tgt.closest('[data-action=edit]');",
   "  if(edit){var c=cases.find(function(x){return x.id===edit.dataset.id;});if(c)openEdit(c);return;}",
   "  if(tgt.closest('[data-action=save]')){",
@@ -169,10 +196,11 @@ const PAGE_JS = [
   "    document.getElementById('modal').classList.remove('open');return;",
   "  }",
   "  if(tgt.closest('[data-action=cancel]')){document.getElementById('modal').classList.remove('open');return;}",
-  "  var f = tgt.closest('[data-filter]');",
-  "  if(f){document.querySelectorAll('.filters button').forEach(function(b){b.classList.toggle('active',b===f);});render();}",
-  "});",
-  "render();",
+"  var f = tgt.closest('[data-filter]');",
+"  if(f){document.querySelectorAll('.filters button').forEach(function(b){b.classList.toggle('active',b===f);});render();}",
+"});",
+"applyTheme();",
+"render();",
 ].join("");
 
 function formatTime(iso) {
@@ -187,12 +215,17 @@ function htmlFor(suite) {
   return (
     "<!doctype html><html lang='en'><head><meta charset='utf-8'>" +
     "<meta name='viewport' content='width=device-width,initial-scale=1'>" +
+    "<script>try{var _p=JSON.parse(localStorage.getItem('cooltest-prefs')||'null')||{};document.documentElement.dataset.theme=_p.theme==='light'?'light':'dark';}catch(e){}</script>" +
     "<title>Cool Test</title><style>" + CSS + "</style></head><body>" +
-    "<div class='topbar'><h1>Cool Test</h1>" +
+    "<div class='topbar'><h1>Cool Test</h1><div class='prefs'>" +
+    "<div class='theme-toggle' id='theme-toggle'>" +
+    "<button data-theme='dark'><span data-i18n='thDark'>Dark</span></button>" +
+    "<button data-theme='light'><span data-i18n='thLight'>Light</span></button>" +
+    "</div>" +
     "<div class='lang-toggle' id='lang-toggle'>" +
     "<button data-lang='en' class='active'>EN</button>" +
     "<button data-lang='zh'>中文</button>" +
-    "</div></div>" +
+    "</div></div></div>" +
     "<div class='sub'>" + suite.suite.source + " · " + formatTime(suite.suite.updatedAt) + "</div>" +
     "<div class='filters'>" +
     "<button class='active' data-filter='all'><span data-i18n='fAll'>All</span><span class='cnt' data-count='all'></span></button>" +
