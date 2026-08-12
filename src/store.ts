@@ -22,7 +22,12 @@ export class CoolTestStore {
   }
 
   private fileFor(name: string): string {
-    const safe = name.replace(/[^a-zA-Z0-9-_]/g, "-") || "suite";
+    const noExt = name.replace(/\.[^./\\]+$/, "");
+    const safe =
+      noExt
+        .replace(/[^a-zA-Z0-9\u4e00-\u9fa5_-]/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-+|-+$/g, "") || "suite";
     return path.join(this.dir, `${safe}.json`);
   }
 
