@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { promises as fs } from "node:fs";
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
@@ -6,49 +9,22 @@ import { CoolTestStore } from "./store.js";
 import { CASE_STATUSES, CaseStatus, CaseItem } from "./types.js";
 import { startReportServer } from "./report.js";
 
-const INSTRUCTIONS = `# Cool Test MCP
-
-You are an automated testing assistant. Users trigger the full test flow with "Use Cool Test for [test case address]" and view the report with "Use Cool Test to view [address]".
-
-## Flow (Use Cool Test for)
-
-1. **Capability check** (before conversion): inspect your own MCP tool list. You have automated testing capability if any whitelist entry matches:
-   - Tool/MCP names containing playwright, puppeteer, or a browser_ prefix
-   - Action words: navigate/click/fill/type/screenshot/snapshot/wait_for/hover/select_option or other browser automation actions
-   - If missing: tell the user they need to configure Playwright MCP (e.g. npx @playwright/mcp), provide a config example, and ask whether they still want to convert
-2. **Convert**: call cooltest_init_suite (source=test case address, name optional). If it returns skipped, the suite exists — confirm whether to overwrite.
-3. **Test case by case**: cooltest_list_cases for summaries → skip non-pending → cooltest_get_case for full content → execute steps with your browser tools → judge against expected:
-   - Match → cooltest_update_case status=passed
-   - No match → failed (fail once, no retry; save a screenshot into evidence)
-   - Cannot test / cannot judge (execution interrupted / result uncertain / dependency missing / out of capability) → review, notes must state the reason
-4. **Wrap up**: cooltest_get_stats → cooltest_open_report
-
-## Read-only (Use Cool Test to view)
-
-Open the report page: cooltest_open_report (suite optional). Use cooltest_get_case for a single case's details.
-
-## Notes
-
-- Always read/write cases through the tools; never edit the .cooltest JSON file directly.
-- When appending test cases without an id, add them one by one with cooltest_update_case before running.
-- If the flow creates a .cooltest directory in the user's project, make sure to add it to the project's .gitignore so it is never committed.`;
-
 export class CoolTestMcpServer {
   private server: Server;
   private store: CoolTestStore;
 
-  constructor(root?: string) {
+  constructor(root: string | undefined, instructions: string) {
     this.store = new CoolTestStore(root);
     this.server = new Server(
       {
         name: "cool-test-mcp",
-        version: "0.1.0",
+        version: "0.2.0",
       },
       {
         capabilities: {
           tools: {},
         },
-        instructions: INSTRUCTIONS,
+        instructions,
       }
     );
     this.registerHandlers();
@@ -68,6 +44,34 @@ export class CoolTestMcpServer {
               overwrite: { type: "boolean", description: "Whether to overwrite if it exists; default false" },
             },
             required: ["source"],
+          },
+        },
+        {
+          name: "cooltest_append_cases",
+          description: "Append one or more new cases to a suite in a single batch (second step of the flow, used for \"Use Cool Test for\"). Pass the full field set for every case. Each case is a separate logical scenario with its own expected result; never merge independent checks into one case.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              suite: { type: "string", description: "Suite name or filePath; defaults to the current suite" },
+              cases: {
+                type: "array",
+                description: "Cases to append",
+                items: {
+                  type: "object",
+                  properties: {
+                    title: { type: "string", description: "Case title, required" },
+                    description: { type: "string", description: "Case description" },
+                    steps: { type: "array", items: { type: "string" }, description: "Ordered atomic UI steps to reach the expected result" },
+                    expected: { type: "string", description: "Expected result, required" },
+                    priority: { type: "string", description: "Priority, e.g. P1" },
+                    tags: { type: "array", items: { type: "string" }, description: "Tags" },
+                    notes: { type: "string", description: "Notes" },
+                  },
+                  required: ["title", "expected"],
+                },
+              },
+            },
+            required: ["cases"],
           },
         },
         {
@@ -100,23 +104,18 @@ export class CoolTestMcpServer {
         },
         {
           name: "cooltest_update_case",
-          description: "Update a case's status/notes/evidence/lastRunAt. Write back results after testing; set status to review with a required notes reason when a case cannot be tested or judged. Also used to append new cases after init (provide the full field set each time).",
+          description: "Update an existing case's status/notes/evidence/lastRunAt after testing. Set status to review with a required notes reason when a case cannot be tested or judged. To add new cases use cooltest_append_cases instead.",
           inputSchema: {
             type: "object",
             properties: {
-              id: { type: "string", description: "Case id, required; for a new case (appended after init) any unused id works" },
+              id: { type: "string", description: "Case id, required" },
               suite: { type: "string", description: "Suite name or filePath; defaults to the current suite" },
               status: { type: "string", enum: CASE_STATUSES, description: "New status" },
               notes: { type: "string", description: "Notes (overwrites)" },
               evidence: { type: "array", items: { type: "string" }, description: "Additional evidence relative paths" },
               lastRunAt: { type: "string", description: "Test timestamp, ISO string" },
-              title: { type: "string", description: "Case title (when adding a new case)" },
-              description: { type: "string", description: "Case description (when adding a new case)" },
-              steps: { type: "array", items: { type: "string" }, description: "Test steps (when adding a new case)" },
-              expected: { type: "string", description: "Expected result (when adding a new case)" },
-              priority: { type: "string", description: "Priority (when adding a new case, e.g. P1)" },
-              tags: { type: "array", items: { type: "string" }, description: "Tags (when adding a new case)" },
             },
+            required: ["id"],
           },
         },
         {
@@ -189,31 +188,42 @@ export class CoolTestMcpServer {
       }
       case "cooltest_update_case": {
         const id = text(args.id);
+        if (!id) throw new Error("id is required");
         const suiteName = await this.store.resolveSuite(args.suite ? text(args.suite) : undefined);
-        const existing = id ? await this.store.getCase(suiteName, id) : null;
-        if (existing) {
-          const patch: { status?: CaseStatus; notes?: string; evidence?: string[]; lastRunAt?: string } = {};
-          if (args.status) patch.status = text(args.status) as CaseStatus;
-          if (args.notes !== undefined) patch.notes = text(args.notes);
-          if (Array.isArray(args.evidence)) patch.evidence = args.evidence.map(String);
-          if (args.lastRunAt !== undefined) patch.lastRunAt = text(args.lastRunAt);
-          const item = await this.store.updateCase(suiteName, id, patch);
-          return this.ok({ id, status: item?.status, updated: true });
-        }
-        const item: Omit<CaseItem, "id"> = {
-          title: text(args.title) || id,
-          description: text(args.description),
-          steps: Array.isArray(args.steps) ? args.steps.map(String) : [],
-          expected: text(args.expected),
-          status: (text(args.status) as CaseStatus) || "pending",
-          priority: text(args.priority) || "P1",
-          tags: Array.isArray(args.tags) ? args.tags.map(String) : [],
-          notes: text(args.notes),
-          lastRunAt: args.lastRunAt !== undefined ? text(args.lastRunAt) : null,
-          evidence: Array.isArray(args.evidence) ? args.evidence.map(String) : [],
-        };
-        const result = await this.store.appendCases(suiteName, [item]);
-        return this.ok({ id: result.ids[0], status: item.status, updated: true, created: true, caseCount: result.caseCount });
+        const existing = await this.store.getCase(suiteName, id);
+        if (!existing) throw new Error(`case ${id} not found; use cooltest_append_cases to add new cases`);
+        const patch: { status?: CaseStatus; notes?: string; evidence?: string[]; lastRunAt?: string } = {};
+        if (args.status) patch.status = text(args.status) as CaseStatus;
+        if (args.notes !== undefined) patch.notes = text(args.notes);
+        if (Array.isArray(args.evidence)) patch.evidence = args.evidence.map(String);
+        if (args.lastRunAt !== undefined) patch.lastRunAt = text(args.lastRunAt);
+        const item = await this.store.updateCase(suiteName, id, patch);
+        return this.ok({ id, status: item?.status, updated: true });
+      }
+      case "cooltest_append_cases": {
+        const suiteName = await this.store.resolveSuite(args.suite ? text(args.suite) : undefined);
+        if (!Array.isArray(args.cases) || args.cases.length === 0) throw new Error("cases is required and must be a non-empty array");
+        const items: Omit<CaseItem, "id">[] = args.cases.map((raw) => {
+          const c = raw as Record<string, unknown>;
+          const title = text(c.title);
+          if (!title) throw new Error("each case requires a title");
+          const expected = text(c.expected);
+          if (!expected) throw new Error(`case "${title}" requires an expected result`);
+          return {
+            title,
+            description: text(c.description),
+            steps: Array.isArray(c.steps) ? c.steps.map(String) : [],
+            expected,
+            status: "pending",
+            priority: text(c.priority) || "P1",
+            tags: Array.isArray(c.tags) ? c.tags.map(String) : [],
+            notes: text(c.notes),
+            lastRunAt: null,
+            evidence: [],
+          };
+        });
+        const result = await this.store.appendCases(suiteName, items);
+        return this.ok({ ids: result.ids, caseCount: result.caseCount, appended: items.length });
       }
       case "cooltest_get_stats": {
         const suiteName = await this.store.resolveSuite(args.suite ? text(args.suite) : undefined);
@@ -253,7 +263,9 @@ function pathBase(p: string): string {
 }
 
 async function main() {
-  const server = new CoolTestMcpServer(process.env.COOLTEST_ROOT || process.cwd());
+  const instructionsFile = path.join(path.dirname(fileURLToPath(import.meta.url)), "instructions.md");
+  const instructions = await fs.readFile(instructionsFile, "utf-8");
+  const server = new CoolTestMcpServer(process.env.COOLTEST_ROOT || process.cwd(), instructions);
   await server.start();
 }
 

@@ -172,6 +172,20 @@ Follow the MCP Servers [documentation](https://opencode.ai/docs/mcp-servers/). F
 
 > The MCP configs for each agent tool above have not all been individually verified. If you find any issues or missing configs, we welcome PRs to add or fix them.
 
+## Environment variables
+
+| Variable | Description |
+|----------|-------------|
+| `COOLTEST_ROOT` | Absolute path to the project root where `.cooltest/` is created and read. Defaults to the MCP process's working directory (`process.cwd()`) when unset. Set it when your client has no per-server `cwd` (e.g. opencode) or when you want to pin the root explicitly. |
+
+```json
+{
+  "environment": {
+    "COOLTEST_ROOT": "/absolute/path/to/your/project"
+  }
+}
+```
+
 ## Usage
 
 ### Trigger the full test flow
@@ -193,10 +207,11 @@ Use Cool Test to view <address>
 | Tool | Purpose |
 |------|---------|
 | `cooltest_init_suite` | Generate a `.cooltest` JSON (does not overwrite by default; `overwrite:true` rebuilds) |
+| `cooltest_append_cases` | Append one or more new cases to a suite in a single batch |
 | `cooltest_list_suites` | List existing suites |
 | `cooltest_list_cases` | Case summary list (id/title/status/priority) |
 | `cooltest_get_case` | Read a single case's full content |
-| `cooltest_update_case` | Update a case's status/notes/evidence/lastRunAt; appends a new case when no id is given |
+| `cooltest_update_case` | Update an existing case's status/notes/evidence/lastRunAt after testing |
 | `cooltest_get_stats` | Suite status statistics |
 | `cooltest_open_report` | Start the local report server and open the page |
 
@@ -218,6 +233,46 @@ npm run build
 # Test (end-to-end check, full tool flow via MCP client)
 node test-e2e.mjs <temp dir>
 ```
+
+### Test the local build as an MCP server
+
+To try your un-published changes in an actual MCP client, point the server at the local `dist/index.js` instead of the npm package. Rebuild first (`npm run build`) so `dist/` is up to date, then register it.
+
+**Generic `mcpServers` config** (Claude Desktop, Cursor, Trae, etc.):
+
+```json
+{
+  "mcpServers": {
+    "cool-test": {
+      "command": "node",
+      "args": ["/absolute/path/to/cool-test-mcp/dist/index.js"],
+      "cwd": "/absolute/path/to/your/project"
+    }
+  }
+}
+```
+
+**opencode** (`~/.config/opencode/opencode.json`):
+
+```json
+{
+  "mcp": {
+    "cool-test": {
+      "type": "local",
+      "command": ["node", "/absolute/path/to/cool-test-mcp/dist/index.js"],
+      "environment": {
+        "COOLTEST_ROOT": "/absolute/path/to/your/project"
+      }
+    }
+  }
+}
+```
+
+Notes for local testing:
+
+- Set the working directory (or `COOLTEST_ROOT`) to the project you want to test against — `.cooltest/` is created there.
+- After rebuilding, **restart the MCP client / reconnect the server** for the new `dist/` to take effect.
+- The published package runs the same code via `npx -y cool-test-mcp@latest`; only the entry point differs.
 
 ## License
 

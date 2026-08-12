@@ -1,6 +1,6 @@
 {
   "name": "cool-test-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Cool Test MCP — automated testing MCP server: convert test cases into a fixed JSON template and drive case-by-case testing.",
   "type": "module",
   "bin": {
@@ -10,7 +10,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc && cp src/report-server.mjs dist/report-server.mjs",
+    "build": "tsc && cp src/report-server.mjs dist/report-server.mjs && cp src/instructions.md dist/instructions.md",
     "dev": "tsc --watch",
     "start": "node dist/index.js"
   },
