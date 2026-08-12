@@ -29,7 +29,8 @@ Open the report page: cooltest_open_report (suite optional). Use cooltest_get_ca
 ## Notes
 
 - Always read/write cases through the tools; never edit the .cooltest JSON file directly.
-- When appending test cases without an id, add them one by one with cooltest_update_case before running.`;
+- When appending test cases without an id, add them one by one with cooltest_update_case before running.
+- If the flow creates a .cooltest directory in the user's project, make sure to add it to the project's .gitignore so it is never committed.`;
 
 export class CoolTestMcpServer {
   private server: Server;
