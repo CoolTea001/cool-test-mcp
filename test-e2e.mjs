@@ -8,6 +8,7 @@ if (!workdir) {
   console.error("usage: node test-e2e.mjs <workdir>");
   process.exit(1);
 }
+fs.mkdirSync(workdir, { recursive: true });
 fs.rmSync(path.join(workdir, ".cooltest"), { recursive: true, force: true });
 
 const transport = new StdioClientTransport({
