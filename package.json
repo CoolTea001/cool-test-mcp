@@ -1,7 +1,7 @@
 {
   "name": "cool-test-mcp",
   "version": "0.1.0",
-  "description": "Cool Test MCP — automated testing MCP server: convert test cases into a fixed JSON template and drive case-by-case testing",
+  "description": "Cool Test MCP — automated testing MCP server: convert test cases into a fixed JSON template and drive case-by-case testing.",
   "type": "module",
   "bin": {
     "cool-test-mcp": "dist/index.js"
@@ -20,6 +20,20 @@
     "playwright"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CoolTea001/cool-test-mcp.git"
+  },
+  "homepage": "https://github.com/CoolTea001/cool-test-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/CoolTea001/cool-test-mcp/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0"
   },

@@ -1,13 +1,17 @@
 # Cool Test MCP
 
-An automated testing MCP server. After configuring this server in your project and providing test cases, you can trigger the full flow: "convert → test case by case → local visual report".
+<p align="center">
+  <a href="README.cn.md">🇨🇳 简体中文</a> · English
+</p>
+
+An automated testing **MCP (Model Context Protocol) server**. After configuring this server in your project and providing test cases, you can trigger the full flow: **convert → test case by case → local visual report**.
 
 ## Features
 
-- **Conversion**: turn test cases in any format into a fixed JSON template (`.cooltest/`)
-- **Case-by-case testing**: read/test/write cases one by one through MCP tools, avoiding direct JSON file I/O that wastes tokens
-- **Review flow**: cases that cannot be tested or judged are automatically set to `review`, left for human review
-- **Visual report**: a local web page shows all case results and supports editing status and notes
+- **Conversion** — turn test cases in any format into a fixed JSON template (`.cooltest/`)
+- **Case-by-case testing** — read / test / write cases one by one through MCP tools, avoiding direct JSON file I/O that wastes tokens
+- **Review flow** — cases that cannot be tested or judged are automatically set to `review`, left for human review
+- **Visual report** — a local web page shows all case results and supports editing status and notes
 
 ## Install
 
@@ -24,8 +28,8 @@ Add this to your agent's MCP configuration (e.g. Claude, Cursor):
 {
   "mcpServers": {
     "cool-test": {
-      "command": "node",
-      "args": ["<absolute path to project>/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "cool-test-mcp"],
       "cwd": "<your project root>"
     }
   }
@@ -33,6 +37,22 @@ Add this to your agent's MCP configuration (e.g. Claude, Cursor):
 ```
 
 > `cwd` points to your project root; `.cooltest/` will be created there.
+
+### Local development
+
+If you cloned the repo instead of installing the package, point directly at the built entry:
+
+```json
+{
+  "mcpServers": {
+    "cool-test": {
+      "command": "node",
+      "args": ["<absolute path to project>/dist/index.js"],
+      "cwd": "<your project root>"
+    }
+  }
+}
+```
 
 ## Usage
 
@@ -94,3 +114,7 @@ Use Cool Test to view <address>
 npm run build   # compile TS + copy the report script to dist
 node test-e2e.mjs <temp dir>   # end-to-end check (full tool flow via MCP client)
 ```
+
+## License
+
+[MIT](LICENSE)

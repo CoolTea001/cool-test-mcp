@@ -1,8 +1,9 @@
+#!/usr/bin/env node
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { CoolTestStore } from "./store.js";
-import { CASE_STATUSES, CaseStatus, CaseItem, CoolTestSuite } from "./types.js";
+import { CASE_STATUSES, CaseStatus, CaseItem } from "./types.js";
 import { startReportServer } from "./report.js";
 
 const INSTRUCTIONS = `# Cool Test MCP
