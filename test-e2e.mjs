@@ -33,13 +33,16 @@ function log(label, v) {
 const init = await call("cooltest_init_suite", { source: "https://example.com/cases/login", name: "login" });
 log("init", { status: init.status, filePath: init.filePath });
 
-// 2. append a case (id unknown)
-const created = await call("cooltest_update_case", {
-  title: "Valid credentials can log in",
-  steps: ["Open the login page", "Enter the account", "Click log in"],
-  expected: "Enter the dashboard",
-  priority: "P1",
-  status: "pending",
+// 2. append cases in batch
+const created = await call("cooltest_append_cases", {
+  cases: [
+    {
+      title: "Valid credentials can log in",
+      steps: ["Open the login page", "Enter the account", "Click log in"],
+      expected: "Enter the dashboard",
+      priority: "P1",
+    },
+  ],
 });
 log("append", created);
 
