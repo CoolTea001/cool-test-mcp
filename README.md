@@ -154,7 +154,7 @@ Use Cool Test to view <address>
 | `cooltest_list_suites` | List existing suites |
 | `cooltest_list_cases` | Case summary list (id/title/status/priority) |
 | `cooltest_get_case` | Read a single case's full content |
-| `cooltest_update_case` | Update an existing case's status/notes/evidence/lastRunAt after testing |
+| `cooltest_update_case` | Update an existing case's status/notes/evidence/lastRunAt; lastRunAt is auto-recorded when set to passed/failed |
 | `cooltest_get_stats` | Suite status statistics |
 | `cooltest_open_report` | Start the local report server and open the page |
 

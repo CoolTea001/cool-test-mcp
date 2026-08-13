@@ -104,7 +104,7 @@ export class CoolTestMcpServer {
         },
         {
           name: "cooltest_update_case",
-          description: "Update an existing case's status/notes/evidence/lastRunAt after testing. Set status to review with a required notes reason when a case cannot be tested or judged. To add new cases use cooltest_append_cases instead.",
+          description: "Update an existing case's status/notes/evidence/lastRunAt after testing. When status is set to passed or failed, lastRunAt is auto-recorded to now unless you pass it explicitly. Set status to review with a required notes reason when a case cannot be tested or judged. To add new cases use cooltest_append_cases instead.",
           inputSchema: {
             type: "object",
             properties: {
@@ -196,7 +196,11 @@ export class CoolTestMcpServer {
         if (args.status) patch.status = text(args.status) as CaseStatus;
         if (args.notes !== undefined) patch.notes = text(args.notes);
         if (Array.isArray(args.evidence)) patch.evidence = args.evidence.map(String);
-        if (args.lastRunAt !== undefined) patch.lastRunAt = text(args.lastRunAt);
+        if (args.lastRunAt !== undefined) {
+          patch.lastRunAt = text(args.lastRunAt);
+        } else if (patch.status === "passed" || patch.status === "failed") {
+          patch.lastRunAt = new Date().toISOString();
+        }
         const item = await this.store.updateCase(suiteName, id, patch);
         return this.ok({ id, status: item?.status, updated: true });
       }

@@ -154,7 +154,7 @@ Use Cool Test to view <地址>
 | `cooltest_list_suites` | 列出已有套件 |
 | `cooltest_list_cases` | 用例摘要列表（id/标题/状态/优先级） |
 | `cooltest_get_case` | 读取单个用例完整内容 |
-| `cooltest_update_case` | 测试后更新已存在用例的状态/备注/证据/lastRunAt |
+| `cooltest_update_case` | 测试后更新已存在用例的状态/备注/证据/lastRunAt；设为通过/失败时自动记录运行时间 |
 | `cooltest_get_stats` | 套件状态统计 |
 | `cooltest_open_report` | 启动本地报告服务器并打开页面 |
 

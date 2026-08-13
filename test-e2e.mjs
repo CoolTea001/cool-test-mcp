@@ -56,9 +56,14 @@ const cid = listed.cases[0].id;
 const got = await call("cooltest_get_case", { suite: "login", id: cid });
 log("get", { id: got.case.id, title: got.case.title, steps: got.case.steps.length });
 
-// 5. update status -> passed with evidence
-const upd = await call("cooltest_update_case", { suite: "login", id: cid, status: "passed", notes: "ok", evidence: ["/artifacts/x.png"], lastRunAt: new Date().toISOString() });
+// 5. update status -> passed with evidence (lastRunAt auto-recorded)
+const upd = await call("cooltest_update_case", { suite: "login", id: cid, status: "passed", notes: "ok", evidence: ["/artifacts/x.png"] });
 log("update", upd);
+
+// 5b. verify lastRunAt was auto-recorded
+const after = await call("cooltest_get_case", { suite: "login", id: cid });
+log("get-after", { lastRunAt: after.case.lastRunAt, status: after.case.status });
+if (!after.case.lastRunAt) throw new Error("expected lastRunAt to be auto-recorded on passed");
 
 // 6. stats
 const stats = await call("cooltest_get_stats", { suite: "login" });
