@@ -1,6 +1,6 @@
 {
   "name": "cool-test-mcp",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Cool Test MCP — automated testing MCP server: convert test cases into a fixed JSON template and drive case-by-case testing.",
   "type": "module",
   "bin": {
