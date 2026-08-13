@@ -19,4 +19,4 @@ Use a **Releases + Tags** model:
 
 ## Documentation & Test Sync
 
-- After completing any coding task, synchronously update the README (`README.md` / `README.cn.md`) and the e2e test (`test-e2e.mjs`) to reflect the changes.
+- After completing any coding task, synchronously update the README (`README.md` / `README.zh.md`) and the e2e test (`test-e2e.mjs`) to reflect the changes.

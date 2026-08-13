@@ -19,4 +19,4 @@
 
 ## 文档与测试同步
 
-- 完成任何编码任务后，需要同步更新 README（`README.md` / `README.cn.md`）和 e2e 测试（`test-e2e.mjs`）以反映改动。
+- 完成任何编码任务后，需要同步更新 README（`README.md` / `README.zh.md`）和 e2e 测试（`test-e2e.mjs`）以反映改动。

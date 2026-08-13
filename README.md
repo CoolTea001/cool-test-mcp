@@ -1,7 +1,7 @@
 # Cool Test MCP
 
 <p align="center">
-  English · <a href="README.cn.md">简体中文</a>
+  English · <a href="README.zh.md">简体中文</a>
 </p>
 
 An automated testing **MCP (Model Context Protocol) server**. It is lightweight — no extra runtime dependencies, single entry point, instant to start — and plugs into any MCP-capable agent (Claude Desktop, Cursor, opencode, etc.) with a few lines of config.
