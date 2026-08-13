@@ -13,7 +13,7 @@
 Use a **Releases + Tags** model:
 
 - **Tags** only publish the package: create a **lightweight** tag (`git tag <version>`, no annotation/message), then push it to trigger CI publish.
-- **Releases** record the version log: create a GitHub Release with the body rendered in markdown. Cover these categories: feature additions/changes, bug fixes, and documentation updates.
+- **Releases** record the version log: create a GitHub Release with the body rendered in markdown and written **in English**. Cover these categories: feature additions/changes, bug fixes, and documentation updates.
 - The Release's tag must match `package.json` version (the CI enforces `v*` tag == package version).
 - Example: push the `vX.Y.Z` lightweight tag, then `gh release create vX.Y.Z --notes "<version log>"`.
 

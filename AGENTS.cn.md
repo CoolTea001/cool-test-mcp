@@ -13,7 +13,7 @@
 采用 **Releases + Tags** 模式：
 
 - **Tag 只负责发布包**：创建**轻量** tag（`git tag <版本号>`，不带注解/消息），推送后触发 CI 发布。
-- **Releases 记录版本日志**：创建 GitHub Release，正文用 markdown 渲染，通常包含功能新增/调整、BUG 修复、文档更新这三类。
+- **Releases 记录版本日志**：创建 GitHub Release，正文用 markdown 渲染且**使用英文编写**，通常包含功能新增/调整、BUG 修复、文档更新这三类。
 - Release 的 tag 必须与 `package.json` 版本一致（CI 会校验 `v*` tag 与包版本一致）。
 - 示例：推送 `vX.Y.Z` 轻量 tag 后，执行 `gh release create vX.Y.Z --notes "<版本日志>"`。
 
