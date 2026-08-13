@@ -265,7 +265,7 @@ function pathBase(p: string): string {
 async function main() {
   const instructionsFile = path.join(path.dirname(fileURLToPath(import.meta.url)), "instructions.md");
   const instructions = await fs.readFile(instructionsFile, "utf-8");
-  const server = new CoolTestMcpServer(process.env.COOLTEST_ROOT || process.cwd(), instructions);
+  const server = new CoolTestMcpServer(process.cwd(), instructions);
   await server.start();
 }
 

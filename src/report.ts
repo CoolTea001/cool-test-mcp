@@ -25,7 +25,7 @@ export async function startReportServer(
   portArg?: number
 ): Promise<{ url: string; port: number }> {
   const projectRoot = path.dirname(path.dirname(suiteJsonPath));
-  const scriptPath = path.join(projectRoot, COOLTEST_DIR, "report-server.mjs");
+  const scriptPath = path.join(projectRoot, COOLTEST_DIR, "report", "report-server.mjs");
   await fs.mkdir(path.dirname(scriptPath), { recursive: true });
   await fs.copyFile(scriptSrcPath, scriptPath);
 

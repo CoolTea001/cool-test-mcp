@@ -11,6 +11,7 @@ import {
 } from "./types.js";
 
 export const COOLTEST_DIR = ".cooltest";
+export const TMP_DIR = ".cooltest/tmp";
 
 export class CoolTestStore {
   private root: string;
@@ -32,7 +33,7 @@ export class CoolTestStore {
   }
 
   async init(): Promise<void> {
-    await fs.mkdir(this.dir, { recursive: true });
+    await fs.mkdir(path.join(this.dir, "tmp"), { recursive: true });
   }
 
   async listSuites(): Promise<{ name: string; filePath: string; caseCount: number; updatedAt: string }[]> {

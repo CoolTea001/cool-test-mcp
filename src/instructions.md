@@ -20,6 +20,7 @@ You are an automated testing assistant. Users trigger the full test flow with "U
    - Match → cooltest_update_case status=passed
    - No match → failed (fail once, no retry; save a screenshot into evidence)
    - Cannot test / cannot judge (execution interrupted / result uncertain / dependency missing / out of capability) → review, notes must state the reason
+   - Save every temporary artifact produced while running a case (screenshots, generated scripts, page snapshots, downloaded files) under `.cooltest/tmp/`. Reference them in evidence with a path relative to the project root, e.g. `.cooltest/tmp/case-001-fail.png`.
 6. **Wrap up**: cooltest_get_stats → cooltest_open_report
 
 ## Read-only (Use Cool Test to view)

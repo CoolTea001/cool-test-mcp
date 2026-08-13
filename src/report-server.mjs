@@ -1,4 +1,4 @@
-// Zero-dependency report server script. Copied to .cooltest/report-server.mjs and launched by cooltest_open_report.
+// Zero-dependency report server script. Copied to .cooltest/report/report-server.mjs and launched by cooltest_open_report.
 // Usage: node report-server.mjs <suite.json> <port>
 import { createServer } from "node:http";
 import { promises as fs } from "node:fs";
@@ -11,10 +11,27 @@ if (!jsonPathArg || !portArg) {
 }
 const jsonPath = path.resolve(jsonPathArg);
 const port = Number(portArg);
+const prefsPath = path.join(path.dirname(jsonPath), "report", "prefs.json");
 
 async function readSuite() {
   const raw = await fs.readFile(jsonPath, "utf-8");
   return JSON.parse(raw);
+}
+
+async function readPrefs() {
+  try {
+    const raw = await fs.readFile(prefsPath, "utf-8");
+    const p = JSON.parse(raw);
+    if (p && typeof p === "object") return p;
+  } catch {}
+  return {};
+}
+
+async function writePrefs(prefs) {
+  try {
+    await fs.mkdir(path.dirname(prefsPath), { recursive: true });
+    await fs.writeFile(prefsPath, JSON.stringify(prefs, null, 2), "utf-8");
+  } catch {}
 }
 
 const CSS = [
@@ -109,8 +126,8 @@ const PAGE_JS = [
   "    phNotes:'记录审查意见、原因等…', bCancel:'取消', bSave:'保存',",
   "    thLight:'浅色', thDark:'深色' }",
   "};",
-  "function loadPrefs(){try{var m=document.cookie.match(/(?:^|; )cooltest-prefs=([^;]*)/);var p=JSON.parse(decodeURIComponent(m&&m[1]?m[1]:'null'));return p&&typeof p==='object'?p:{};}catch(e){return {};}}",
-  "function savePrefs(){try{document.cookie='cooltest-prefs='+encodeURIComponent(JSON.stringify({lang:lang,theme:THEME}))+';path=/;max-age=31536000';}catch(e){}}",
+  "function loadPrefs(){var p={};if(window.__PREFS&&typeof window.__PREFS==='object')p=window.__PREFS;try{var m=document.cookie.match(/(?:^|; )cooltest-prefs=([^;]*)/);var c=JSON.parse(decodeURIComponent(m&&m[1]?m[1]:'null'));if(c&&typeof c==='object'&&(c.lang||c.theme))p=c;}catch(e){}return p;}",
+  "function savePrefs(){var v={lang:lang,theme:THEME};try{document.cookie='cooltest-prefs='+encodeURIComponent(JSON.stringify(v))+';path=/;max-age=31536000';}catch(e){}try{fetch('/api/prefs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(v)});}catch(e){}}",
   "var p=loadPrefs();",
   "var lang=p.lang==='zh'?'zh':'en';",
   "var THEME=p.theme==='light'?'light':'dark';",
@@ -211,11 +228,14 @@ function formatTime(iso) {
     " " + p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
 }
 
-function htmlFor(suite) {
+function htmlFor(suite, prefs) {
+  const lang = prefs && prefs.lang === "zh" ? "zh" : "en";
+  const theme = prefs && prefs.theme === "light" ? "light" : "dark";
   return (
     "<!doctype html><html lang='en'><head><meta charset='utf-8'>" +
     "<meta name='viewport' content='width=device-width,initial-scale=1'>" +
-    "<script>try{var _m=(document.cookie.match(/(?:^|; )cooltest-prefs=([^;]*)/)||[])[1];var _p=_m?JSON.parse(decodeURIComponent(_m)):{};document.documentElement.dataset.theme=_p.theme==='light'?'light':'dark';}catch(e){}</script>" +
+    "<script>window.__PREFS=" + JSON.stringify({ lang, theme }) + ";</script>" +
+    "<script>try{var _p=window.__PREFS||{};var _m=(document.cookie.match(/(?:^|; )cooltest-prefs=([^;]*)/)||[])[1];var _c=_m?JSON.parse(decodeURIComponent(_m)):{};if(_c&&typeof _c==='object'&&(_c.lang||_c.theme))_p=_c;document.documentElement.dataset.theme=_p.theme==='light'?'light':'dark';}catch(e){}</script>" +
     "<title>Cool Test</title><style>" + CSS + "</style></head><body>" +
     "<div class='topbar'><h1>Cool Test</h1><div class='prefs'>" +
     "<div class='theme-toggle' id='theme-toggle'>" +
@@ -269,9 +289,19 @@ const server = createServer(async function (req, res) {
       res.end(JSON.stringify({ ok: true, id: item.id, status: item.status }));
       return;
     }
+    if (req.method === "POST" && url.pathname === "/api/prefs") {
+      let body = "";
+      for await (const chunk of req) body += chunk;
+      const prefs = JSON.parse(body || "{}");
+      await writePrefs(prefs);
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true }));
+      return;
+    }
     const suite = await readSuite();
+    const prefs = await readPrefs();
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-    res.end(htmlFor(suite));
+    res.end(htmlFor(suite, prefs));
   } catch (err) {
     res.writeHead(500, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ ok: false, error: String(err) }));

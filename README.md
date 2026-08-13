@@ -43,49 +43,6 @@ No local install needed — the server runs directly via `npx`. Register it in y
 > `cwd` points to your project root; `.cooltest/` will be created there. For clients without a per-server `cwd`, the folder is created in the MCP process's working directory.
 
 <details>
-<summary>Codex</summary>
-
-Use the Codex CLI to add the server:
-
-```bash
-codex mcp add cool-test npx "-y cool-test-mcp@latest"
-```
-
-Alternatively, create or edit `~/.codex/config.toml`:
-
-```toml
-[mcp_servers.cool-test]
-command = "npx"
-args = ["-y", "cool-test-mcp@latest"]
-```
-
-For more information, see the [Codex MCP documentation](https://github.com/openai/codex/blob/main/codex-rs/config.md#mcp_servers).
-
-</details>
-
-<details>
-<summary>Claude Desktop</summary>
-
-Follow the MCP install [guide](https://modelcontextprotocol.io/quickstart/user), and add to `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "cool-test": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "cool-test-mcp@latest"
-      ],
-      "cwd": "/absolute/path/to/your/project"
-    }
-  }
-}
-```
-
-</details>
-
-<details>
 <summary>Cursor</summary>
 
 Go to `Cursor Settings` -> `MCP` -> `Add new MCP Server`. Name it to your liking, use `command` type with the command `npx -y cool-test-mcp@latest`. Alternatively, add to `.cursor/mcp.json`:
@@ -172,20 +129,6 @@ Follow the MCP Servers [documentation](https://opencode.ai/docs/mcp-servers/). F
 
 > The MCP configs for each agent tool above have not all been individually verified. If you find any issues or missing configs, we welcome PRs to add or fix them.
 
-## Environment variables
-
-| Variable | Description |
-|----------|-------------|
-| `COOLTEST_ROOT` | Absolute path to the project root where `.cooltest/` is created and read. Defaults to the MCP process's working directory (`process.cwd()`) when unset. Set it when your client has no per-server `cwd` (e.g. opencode) or when you want to pin the root explicitly. |
-
-```json
-{
-  "environment": {
-    "COOLTEST_ROOT": "/absolute/path/to/your/project"
-  }
-}
-```
-
 ## Usage
 
 ### Trigger the full test flow
@@ -259,10 +202,7 @@ To try your un-published changes in an actual MCP client, point the server at th
   "mcp": {
     "cool-test": {
       "type": "local",
-      "command": ["node", "/absolute/path/to/cool-test-mcp/dist/index.js"],
-      "environment": {
-        "COOLTEST_ROOT": "/absolute/path/to/your/project"
-      }
+      "command": ["node", "/absolute/path/to/cool-test-mcp/dist/index.js"]
     }
   }
 }
@@ -270,7 +210,7 @@ To try your un-published changes in an actual MCP client, point the server at th
 
 Notes for local testing:
 
-- Set the working directory (or `COOLTEST_ROOT`) to the project you want to test against — `.cooltest/` is created there.
+- Set the working directory to the project you want to test against — `.cooltest/` is created in the MCP process's current working directory.
 - After rebuilding, **restart the MCP client / reconnect the server** for the new `dist/` to take effect.
 - The published package runs the same code via `npx -y cool-test-mcp@latest`; only the entry point differs.
 

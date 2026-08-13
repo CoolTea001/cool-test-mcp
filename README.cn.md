@@ -43,49 +43,6 @@
 > `cwd` 指向项目根目录，`.cooltest/` 会创建在这里。对于不支持单独设置 `cwd` 的客户端，目录会落在 MCP 进程的工作目录下。
 
 <details>
-<summary>Codex</summary>
-
-使用 Codex CLI 添加服务器：
-
-```bash
-codex mcp add cool-test npx "-y cool-test-mcp@latest"
-```
-
-或创建/编辑 `~/.codex/config.toml`：
-
-```toml
-[mcp_servers.cool-test]
-command = "npx"
-args = ["-y", "cool-test-mcp@latest"]
-```
-
-更多信息参见 [Codex MCP 文档](https://github.com/openai/codex/blob/main/codex-rs/config.md#mcp_servers)。
-
-</details>
-
-<details>
-<summary>Claude Desktop</summary>
-
-参考 MCP 安装[指南](https://modelcontextprotocol.io/quickstart/user)，添加到 `claude_desktop_config.json`：
-
-```json
-{
-  "mcpServers": {
-    "cool-test": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "cool-test-mcp@latest"
-      ],
-      "cwd": "/绝对路径/你的项目目录"
-    }
-  }
-}
-```
-
-</details>
-
-<details>
 <summary>Cursor</summary>
 
 进入 `Cursor Settings` -> `MCP` -> `Add new MCP Server`，自定义名称，`command` 类型填入命令 `npx -y cool-test-mcp@latest`。或者添加到 `.cursor/mcp.json`：
@@ -172,20 +129,6 @@ Zed 使用 `context_servers` 键（而非 `mcpServers`）。添加到 `~/.config
 
 > 以上各 Agent 工具的 MCP 配置未一一验证，如果存在问题或配置遗漏，欢迎通过 PR 补充。
 
-## 环境变量
-
-| 变量 | 说明 |
-|------|------|
-| `COOLTEST_ROOT` | 项目根目录的绝对路径，`.cooltest/` 会在该目录下创建和读取。未设置时，默认使用 MCP 进程的工作目录（`process.cwd()`）。当客户端不支持单独的 `cwd`（如 opencode），或你想显式固定根目录时，请设置此项。 |
-
-```json
-{
-  "environment": {
-    "COOLTEST_ROOT": "/绝对路径/你的项目目录"
-  }
-}
-```
-
 ## 使用方式
 
 ### 触发完整测试流程
@@ -259,10 +202,7 @@ node test-e2e.mjs <临时目录>
   "mcp": {
     "cool-test": {
       "type": "local",
-      "command": ["node", "/绝对路径/cool-test-mcp/dist/index.js"],
-      "environment": {
-        "COOLTEST_ROOT": "/绝对路径/你的项目"
-      }
+      "command": ["node", "/绝对路径/cool-test-mcp/dist/index.js"]
     }
   }
 }
@@ -270,7 +210,7 @@ node test-e2e.mjs <临时目录>
 
 本地测试要点：
 
-- 将工作目录（或 `COOLTEST_ROOT`）指向待测试的项目，`.cooltest/` 会生成在该目录下。
+- 将工作目录指向待测试的项目，`.cooltest/` 会在 MCP 进程的当前工作目录下生成。
 - 重新构建后，**重启 MCP 客户端 / 重新连接服务器**，新的 `dist/` 才会生效。
 - 发布到 npm 的包通过 `npx -y cool-test-mcp@latest` 运行的也是这套代码，只是入口不同。
 
